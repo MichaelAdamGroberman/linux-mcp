@@ -1,0 +1,61 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo fmt --all -- --check
+      - run: cargo clippy --workspace -- -D warnings
+      - run: cargo test --workspace --all-features
+
+  build-binary:
+    needs: test
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - x86_64-unknown-linux-musl
+          - aarch64-unknown-linux-musl
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.target }}
+      - name: Install cross
+        run: cargo install cross --locked --version 0.2.5
+      - name: Build
+        run: cross build --release --target ${{ matrix.target }} --bin linux-mcp
+      - name: Smoke
+        if: matrix.target == 'x86_64-unknown-linux-musl'
+        run: |
+          BIN=target/${{ matrix.target }}/release/linux-mcp
+          file "$BIN"
+          ( printf '%s\n' \
+              '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","clientInfo":{"name":"ci","version":"0"},"capabilities":{}}}' \
+              '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}'
+            sleep 1
+          ) | "$BIN" 2>/dev/null > /tmp/mcp.out
+          COUNT=$(grep -o '"name":"[a-z_]*"' /tmp/mcp.out | sort -u | wc -l)
+          echo "tool count: $COUNT"
+          test "$COUNT" -ge 32
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-mcp-${{ matrix.target }}
+          path: target/${{ matrix.target }}/release/linux-mcp
+          if-no-files-found: error

@@ -1,0 +1,10 @@
+target/
+Cargo.lock.bak
+*.swp
+.idea/
+.vscode/
+.DS_Store
+dist/
+*.deb
+*.rpm
+*.tar.gz

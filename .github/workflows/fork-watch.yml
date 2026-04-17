@@ -1,0 +1,27 @@
+name: fork-watch
+
+on:
+  fork:
+  watch:
+    types: [started]
+
+permissions:
+  contents: read
+
+jobs:
+  log:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          {
+            echo "## Repo activity event"
+            echo
+            echo "- **event:** \`${{ github.event_name }}\`"
+            echo "- **actor:** [@${{ github.actor }}](https://github.com/${{ github.actor }})"
+            echo "- **time:** $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            if [ "${{ github.event_name }}" = "fork" ]; then
+              echo "- **forkee:** [${{ github.event.forkee.full_name }}](${{ github.event.forkee.html_url }})"
+            fi
+            echo "- **stargazers_count:** ${{ github.event.repository.stargazers_count }}"
+            echo "- **forks_count:** ${{ github.event.repository.forks_count }}"
+          } >> "$GITHUB_STEP_SUMMARY"

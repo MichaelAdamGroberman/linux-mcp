@@ -1,0 +1,85 @@
+name: release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-pack:
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - x86_64-unknown-linux-musl
+          - aarch64-unknown-linux-musl
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo install cross --locked --version 0.2.5
+      - run: cross build --release --target ${{ matrix.target }} --bin linux-mcp
+
+      - name: Tarball
+        run: |
+          mkdir -p dist
+          ARCH="${{ matrix.target }}"
+          TAR="dist/linux-mcp-${ARCH}.tar.gz"
+          tar -czf "$TAR" \
+            -C target/${ARCH}/release linux-mcp \
+            -C ../../../.. README.md LICENSE SECURITY.md
+          ls -la dist/
+
+      - name: Install cargo-deb / cargo-generate-rpm (amd64 only)
+        if: matrix.target == 'x86_64-unknown-linux-musl'
+        run: |
+          cargo install cargo-deb --locked --version 2.10.0
+          cargo install cargo-generate-rpm --locked --version 0.16.0
+
+      - name: Build .deb (amd64)
+        if: matrix.target == 'x86_64-unknown-linux-musl'
+        run: |
+          cargo deb -p linux-mcp --target ${{ matrix.target }} --no-build
+          cp target/${{ matrix.target }}/debian/*.deb dist/
+          ls dist/*.deb
+
+      - name: Build .rpm (amd64)
+        if: matrix.target == 'x86_64-unknown-linux-musl'
+        run: |
+          cargo generate-rpm -p crates/linux-mcp --target ${{ matrix.target }} --payload-compress none
+          cp target/${{ matrix.target }}/generate-rpm/*.rpm dist/
+          ls dist/*.rpm
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-mcp-${{ matrix.target }}-artifacts
+          path: dist/
+
+  publish:
+    needs: build-and-pack
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: linux-mcp-*-artifacts
+          path: dist
+          merge-multiple: true
+      - name: Show artifacts
+        run: ls -la dist/
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            dist/*.tar.gz
+            dist/*.deb
+            dist/*.rpm

@@ -1,0 +1,67 @@
+[package]
+name = "linux-mcp"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Linux native control via MCP — typed, allow-listed surface for filesystem, process, clipboard, notifications, screenshots, windows, and input. Detects X11/Wayland at runtime."
+
+[[bin]]
+name = "linux-mcp"
+path = "src/main.rs"
+
+[dependencies]
+linux-mcp-core = { path = "../linux-mcp-core" }
+rmcp = { workspace = true }
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+schemars = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+chrono = { workspace = true }
+base64 = { workspace = true }
+notify = { workspace = true }
+fs_extra = { workspace = true }
+async-trait = { workspace = true }
+walkdir = { workspace = true }
+glob = { workspace = true }
+xattr = { workspace = true }
+nix = { workspace = true }
+url = { workspace = true }
+which = { workspace = true }
+uuid = { version = "1.23.1", features = ["v4"] }
+
+[package.metadata.deb]
+maintainer = "Michael Adam Groberman <81723568+MichaelAdamGroberman@users.noreply.github.com>"
+copyright = "2026 Michael Adam Groberman"
+license-file = ["../../LICENSE", "0"]
+extended-description = """\
+linux-mcp is a typed, allow-listed MCP server for Linux: filesystem, process, \
+clipboard, notifications, screenshots, windows, and input. Detects X11/Wayland \
+at runtime. Companion to mac-mcp."""
+section = "utils"
+priority = "optional"
+depends = "$auto"
+recommends = "wmctrl, xdotool, xclip, scrot, libnotify-bin, zenity"
+suggests = "wl-clipboard, grim, wtype, ydotool, swaymsg, hyprctl, kdialog"
+assets = [
+    ["target/release/linux-mcp", "usr/bin/", "755"],
+    ["../../README.md", "usr/share/doc/linux-mcp/README", "644"],
+    ["../../SECURITY.md", "usr/share/doc/linux-mcp/SECURITY", "644"],
+]
+
+[package.metadata.generate-rpm]
+license = "MIT"
+summary = "Typed, allow-listed MCP server for Linux"
+assets = [
+    { source = "target/release/linux-mcp", dest = "/usr/bin/linux-mcp", mode = "755" },
+    { source = "README.md", dest = "/usr/share/doc/linux-mcp/README", mode = "644", doc = true },
+    { source = "SECURITY.md", dest = "/usr/share/doc/linux-mcp/SECURITY", mode = "644", doc = true },
+]
+[package.metadata.generate-rpm.requires]
+xdg-utils = "*"
+

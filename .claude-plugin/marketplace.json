@@ -1,0 +1,31 @@
+{
+  "name": "linux-mcp",
+  "owner": {
+    "name": "Michael Adam Groberman",
+    "email": "81723568+MichaelAdamGroberman@users.noreply.github.com"
+  },
+  "metadata": {
+    "description": "Native Linux control via MCP — 32 typed allow-listed tools across filesystem, process, clipboard, screenshots, mouse/keyboard, notifications, dialogs, and windows. Detects X11/Wayland at runtime. Companion to mac-mcp.",
+    "version": "0.1.0",
+    "homepage": "https://github.com/MichaelAdamGroberman/linux-mcp"
+  },
+  "plugins": [
+    {
+      "name": "linux-mcp",
+      "source": "./",
+      "description": "Native Linux control: 32 typed tools, X11+Wayland runtime detection, allow-listed filesystem and process exec.",
+      "version": "0.1.0",
+      "author": {
+        "name": "Michael Adam Groberman",
+        "url": "https://github.com/MichaelAdamGroberman",
+        "email": "81723568+MichaelAdamGroberman@users.noreply.github.com"
+      },
+      "category": "general",
+      "homepage": "https://github.com/MichaelAdamGroberman/linux-mcp",
+      "keywords": [
+        "linux", "x11", "wayland", "mcp", "automation",
+        "filesystem", "process", "clipboard", "screenshot", "rust"
+      ]
+    }
+  ]
+}
