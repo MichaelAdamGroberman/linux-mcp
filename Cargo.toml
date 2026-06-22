@@ -27,7 +27,7 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
 chrono = { version = "0.4", default-features = false, features = ["clock", "serde"] }
 base64 = "0.22"
-notify = "6"
+notify = "8"
 fs_extra = "1.3"
 async-trait = "0.1"
 walkdir = "2"
