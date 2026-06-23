@@ -42,42 +42,30 @@ impl LinuxMcpServer {
             Value::Object(m) => m,
             _ => Map::new(),
         };
-        Tool {
-            name: name.to_string().into(),
-            title: None,
-            description: Some(desc.to_string().into()),
-            input_schema: Arc::new(map),
-            output_schema: None,
-            annotations: None,
-            execution: None,
-            icons: None,
-            meta: None,
-        }
+        // rmcp 1.x marks `Tool` `#[non_exhaustive]`, so construct via the
+        // `new` constructor (title/output_schema/annotations/etc. default to None).
+        Tool::new(name.to_string(), desc.to_string(), Arc::new(map))
     }
 }
 
 impl ServerHandler for LinuxMcpServer {
     fn get_info(&self) -> ServerInfo {
-        ServerInfo {
-            protocol_version: ProtocolVersion::V_2025_06_18,
-            capabilities: ServerCapabilities::builder().enable_tools().build(),
-            server_info: Implementation {
-                name: "linux-mcp".into(),
-                title: Some("Linux Native Control".into()),
-                version: linux_mcp_core::VERSION.into(),
-                description: Some(
-                    "Native Linux MCP server: filesystem, process, clipboard, screenshots, windows, input."
-                        .into(),
-                ),
-                icons: None,
-                website_url: Some("https://github.com/MichaelAdamGroberman/linux-mcp".into()),
-            },
-            instructions: Some(
+        // rmcp 1.x marks ServerInfo (= InitializeResult) and Implementation
+        // `#[non_exhaustive]`, so build them via constructors + `with_*` setters.
+        let server_info = Implementation::new("linux-mcp", linux_mcp_core::VERSION)
+            .with_title("Linux Native Control")
+            .with_description(
+                "Native Linux MCP server: filesystem, process, clipboard, screenshots, windows, input.",
+            )
+            .with_website_url("https://github.com/MichaelAdamGroberman/linux-mcp");
+
+        ServerInfo::new(ServerCapabilities::builder().enable_tools().build())
+            .with_protocol_version(ProtocolVersion::V_2025_06_18)
+            .with_server_info(server_info)
+            .with_instructions(
                 "Linux native control. Filesystem + process tools are allow-listed via \
-                 LINUX_MCP_FS_ALLOW / LINUX_MCP_PROCESS_ALLOW. Display tools detect X11/Wayland."
-                    .into(),
-            ),
-        }
+                 LINUX_MCP_FS_ALLOW / LINUX_MCP_PROCESS_ALLOW. Display tools detect X11/Wayland.",
+            )
     }
 
     fn list_tools(
